@@ -1,0 +1,141 @@
+-- scripts/002_seed_data.sql
+
+-- Insertar usuario de prueba
+INSERT INTO usuario (nombres, apellidos, email, password_hash, tipo_usuario) VALUES
+('Juan', 'Pérez', 'juan@example.com', '123456', 'viajero')
+ON CONFLICT (email) DO NOTHING;
+
+-- Insertar paradas de ejemplo
+INSERT INTO Parada (nombre_parada, latitude, longitude) VALUES
+('Estación Central', 40.7128, -74.0060),
+('Parque del Sol', 40.7200, -73.9900),
+('Plaza Mayor', 40.7050, -74.0150),
+('Centro Comercial', 40.7300, -73.9800),
+('Terminal Norte', 40.7400, -73.9700),
+('Terminal Sur', 40.6900, -74.0200),
+('Museo de Arte', 40.7100, -73.9950)
+ON CONFLICT (nombre_parada) DO NOTHING;
+
+SELECT * FROM Ruta;
+-- Insertar Rutas de transporte público de ejemplo
+INSERT INTO Ruta (nombre, tipo_transporte, color, tiempo_estimado_llegada, destinos_principales) VALUES
+('Ruta Verde', 'bus', '#4CAF50', '5 min', ARRAY['Estación Central', 'Terminal Norte']),
+('Línea Azul', 'tranvia', '#2196F3', '10 min', ARRAY['Terminal Sur', 'Museo de Arte'])
+ON CONFLICT (nombre) DO NOTHING;
+
+-- Insertar relaciones Ruta_parada para definir las rutas completas
+DO $$
+DECLARE
+  ruta_verde_id INT;
+  linea_azul_id INT;
+  estacion_central_id INT;
+  parque_sol_id INT;
+  plaza_mayor_id INT;
+  centro_comercial_id INT;
+  terminal_norte_id INT;
+  terminal_sur_id INT;
+  museo_arte_id INT;
+BEGIN
+  SELECT id_ruta INTO ruta_verde_id FROM Ruta WHERE nombre = 'Ruta Verde';
+  SELECT id_ruta INTO linea_azul_id FROM Ruta WHERE nombre = 'Línea Azul';
+
+  SELECT id_parada INTO estacion_central_id FROM Parada WHERE nombre_parada = 'Estación Central';
+  SELECT id_parada INTO parque_sol_id FROM Parada WHERE nombre_parada = 'Parque del Sol';
+  SELECT id_parada INTO plaza_mayor_id FROM Parada WHERE nombre_parada = 'Plaza Mayor';
+  SELECT id_parada INTO centro_comercial_id FROM Parada WHERE nombre_parada = 'Centro Comercial';
+  SELECT id_parada INTO terminal_norte_id FROM Parada WHERE nombre_parada = 'Terminal Norte';
+  SELECT id_parada INTO terminal_sur_id FROM Parada WHERE nombre_parada = 'Terminal Sur';
+  SELECT id_parada INTO museo_arte_id FROM Parada WHERE nombre_parada = 'Museo de Arte';
+
+  -- Ruta Verde: Estación Central -> Parque del Sol -> Plaza Mayor -> Centro Comercial -> Terminal Norte
+  INSERT INTO Ruta_parada (id_ruta, id_parada, orden) VALUES
+  (ruta_verde_id, estacion_central_id, 1),
+  (ruta_verde_id, parque_sol_id, 2),
+  (ruta_verde_id, plaza_mayor_id, 3),
+  (ruta_verde_id, centro_comercial_id, 4),
+  (ruta_verde_id, terminal_norte_id, 5)
+  ON CONFLICT (id_ruta, id_parada) DO NOTHING;
+
+  -- Línea Azul: Terminal Sur -> Plaza Mayor -> Estación Central -> Parque del Sol -> Museo de Arte
+  INSERT INTO Ruta_parada (id_ruta, id_parada, orden) VALUES
+  (linea_azul_id, terminal_sur_id, 1),
+  (linea_azul_id, plaza_mayor_id, 2),
+  (linea_azul_id, estacion_central_id, 3),
+  (linea_azul_id, parque_sol_id, 4),
+  (linea_azul_id, museo_arte_id, 5)
+  ON CONFLICT (id_ruta, id_parada) DO NOTHING;
+END $$;
+
+-- Insertar Vehículos Colectivos de ejemplo
+DO $$
+DECLARE
+  ruta_verde_id INT;
+  linea_azul_id INT;
+  vehiculo_colectivo_id INT;
+BEGIN
+  SELECT id_ruta INTO ruta_verde_id FROM Ruta WHERE nombre = 'Ruta Verde';
+  SELECT id_ruta INTO linea_azul_id FROM Ruta WHERE nombre = 'Línea Azul';
+
+  -- Bus
+  INSERT INTO Vehiculo_colectivo (estado, id_ruta, precio_por_viaje, capacidad_pasajeros, factor_huella_de_carbono) VALUES
+  ('Disponible', ruta_verde_id, 2.50, 40, 0.15) RETURNING id_vehiculo_colectivo INTO vehiculo_colectivo_id;
+  INSERT INTO Bus (id_vehiculo, placa, modelo, marca) VALUES (vehiculo_colectivo_id, 'ABC-123', 'CityBus', 'Mercedes')
+  ON CONFLICT (id_vehiculo) DO NOTHING;
+
+  -- Tranvia
+  INSERT INTO Vehiculo_colectivo (estado, id_ruta, precio_por_viaje, capacidad_pasajeros, factor_huella_de_carbono) VALUES
+  ('Disponible', linea_azul_id, 1.80, 60, 0.08) RETURNING id_vehiculo_colectivo INTO vehiculo_colectivo_id;
+  INSERT INTO Tranvia (id_vehiculo) VALUES (vehiculo_colectivo_id)
+  ON CONFLICT (id_vehiculo) DO NOTHING;
+END $$;
+
+-- Insertar Estaciones de ejemplo (para vehículos individuales)
+INSERT INTO Estacion (nombre_ubicacion, latitude, longitude, capacidad) VALUES
+('Punto Central', 40.7128, -74.0060, 20),
+('Punto Parque', 40.7200, -73.9900, 15),
+('Punto Plaza', 40.7050, -74.0150, 10),
+('Punto Comercial', 40.7300, -73.9800, 25)
+ON CONFLICT (nombre_ubicacion) DO NOTHING;
+
+-- Insertar Vehículos Individuales de ejemplo
+DO $$
+DECLARE
+  punto_central_id INT;
+  punto_parque_id INT;
+  punto_plaza_id INT;
+  punto_comercial_id INT;
+  vehiculo_id INT;
+BEGIN
+  SELECT id_estacion INTO punto_central_id FROM Estacion WHERE nombre_ubicacion = 'Punto Central';
+  SELECT id_estacion INTO punto_parque_id FROM Estacion WHERE nombre_ubicacion = 'Punto Parque';
+  SELECT id_estacion INTO punto_plaza_id FROM Estacion WHERE nombre_ubicacion = 'Punto Plaza';
+  SELECT id_estacion INTO punto_comercial_id FROM Estacion WHERE nombre_ubicacion = 'Punto Comercial';
+
+  -- Bicicletas
+  INSERT INTO Vehiculo_individual (estado, id_estacion, precio_por_minuto, factor_huella_de_carbono) VALUES
+  ('Disponible', punto_central_id, 50.00, 0.05) RETURNING id_vehiculo INTO vehiculo_id;
+  INSERT INTO Bicicleta (id_vehiculo, estado_llantas) VALUES (vehiculo_id, 'Bueno')
+  ON CONFLICT (id_vehiculo) DO NOTHING;
+
+  INSERT INTO Vehiculo_individual (estado, id_estacion, precio_por_minuto, factor_huella_de_carbono) VALUES
+  ('Disponible', punto_central_id, 50.00, 0.05) RETURNING id_vehiculo INTO vehiculo_id;
+  INSERT INTO Bicicleta (id_vehiculo, estado_llantas) VALUES (vehiculo_id, 'Regular')
+  ON CONFLICT (id_vehiculo) DO NOTHING;
+
+  -- Scooters
+  INSERT INTO Vehiculo_individual (estado, id_estacion, precio_por_minuto, factor_huella_de_carbono) VALUES
+  ('Disponible', punto_parque_id, 75.00, 0.02) RETURNING id_vehiculo INTO vehiculo_id;
+  INSERT INTO Scooter (id_vehiculo, capacidad_bateria) VALUES (vehiculo_id, 85)
+  ON CONFLICT (id_vehiculo) DO NOTHING;
+
+  INSERT INTO Vehiculo_individual (estado, id_estacion, precio_por_minuto, factor_huella_de_carbono) VALUES
+  ('Disponible', punto_comercial_id, 75.00, 0.02) RETURNING id_vehiculo INTO vehiculo_id;
+  INSERT INTO Scooter (id_vehiculo, capacidad_bateria) VALUES (vehiculo_id, 60)
+  ON CONFLICT (id_vehiculo) DO NOTHING;
+END $$;
+
+-- No se insertan datos en 'Viaje_alquiler' ni 'Viaje_normal' aquí,
+-- ya que estos se generan a través de las acciones del usuario en la aplicación.
+
+ALTER TABLE vehicles
+ALTER COLUMN battery_level DROP NOT NULL;

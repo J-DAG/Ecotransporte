@@ -166,7 +166,7 @@ export default function VehicleRentalModal({ isOpen, onClose, vehicle, stationNa
                     <div key={station.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">{station.name}</p>
-                        <p className="text-sm text-gray-500">{station.availableVehicles} espacios disponibles</p>
+                        <p className="text-sm text-gray-500">{station.availableVehicles} vehiculos actuales</p>
                       </div>
                       <Button
                         size="sm"
@@ -253,7 +253,7 @@ export default function VehicleRentalModal({ isOpen, onClose, vehicle, stationNa
                     .filter((station) => station.name !== stationName)
                     .map((station) => (
                       <SelectItem key={station.id} value={station.name}>
-                        {station.name} ({station.availableVehicles} espacios disponibles)
+                        {station.name} ({station.availableVehicles} vehiculos )
                       </SelectItem>
                     ))}
                 </SelectContent>

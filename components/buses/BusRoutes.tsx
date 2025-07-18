@@ -116,7 +116,11 @@ export default function BusRoutes() {
             </div>
             <div>
               <p className="text-2xl font-bold text-orange-600">
-                {Math.round(allRoutes.reduce((sum, route) => sum + route.fullRoute.length, 0) / allRoutes.length)}
+                {allRoutes.length > 0
+                  ? Math.round(
+                      allRoutes.reduce((sum, route) => sum + route.fullRoute.length, 0) / allRoutes.length
+                    )
+                  : "N/A"}
               </p>
               <p className="text-sm text-gray-600">Promedio por Ruta</p>
             </div>

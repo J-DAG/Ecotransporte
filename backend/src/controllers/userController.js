@@ -16,9 +16,7 @@ export const registerUser = async (req, res) => {
       return res.status(409).json({ message: "El email ya está registrado." })
     }
 
-    // 2. Hashear la contraseña (¡IMPORTANTE para producción!)
-    // const hashedPassword = await bcrypt.hash(password, 10);
-    const hashedPassword = password // Por ahora, sin hasheo real para simplificar la demo
+    const hashedPassword = password 
 
     // 3. Insertar nuevo usuario
     const result = await query(
@@ -50,8 +48,6 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Credenciales inválidas." })
     }
 
-    // 2. Comparar contraseña (¡IMPORTANTE para producción, usar bcrypt.compare!)
-    // const isMatch = await bcrypt.compare(password, user.password_hash);
     const isMatch = password === user.password_hash // Por ahora, comparación simple
 
     if (!isMatch) {

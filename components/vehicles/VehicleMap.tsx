@@ -48,7 +48,7 @@ export default function VehicleMap() {
                     {/* {v.type === "" && <Train className="h-4 w-4 text-purple-600" />}*/}
                     <div>
                       <span className="font-medium">
-                        {v.type === "bike" ? "Bici" : v.type === "scooter" ? "Scooter" : "Tranvía"} {v.id}
+                        {v.type === "bike" ? "Bici" : v.type === "scooter" ? "Scooter" : "No identificado"} {v.id}
                       </span>
                       {v.type === "scooter" && ( // Solo muestra la batería si es un scooter
                         <div className="flex items-center space-x-1 text-xs text-gray-500">
